@@ -1,0 +1,15 @@
+{
+  "dependencies": {
+    "@srexi/purecounterjs": "^1.5.0",
+    "aos": "^2.3.4",
+    "bootstrap": "^5.2.3",
+    "bootstrap-icons": "^1.10.4",
+    "boxicons": "^2.1.4",
+    "glightbox": "^3.2.0",
+    "isotope-layout": "^3.0.6",
+    "sahel-font": "^3.4.0",
+    "swiper": "^9.2.0",
+    "typed.js": "^2.0.15",
+    "waypoints": "^4.0.1"
+  }
+}
