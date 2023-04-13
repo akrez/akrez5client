@@ -12,8 +12,8 @@ class Api
 
     public function getApiBaseUrl()
     {
-        return 'http://localhost/akrez5/api';
         return 'https://akrez.ir/api';
+        return 'http://localhost/akrez5/api';
     }
 
     public function getGalleryUrl($name)
@@ -94,9 +94,17 @@ class Api
         $data = $this->getData();
         return $data['blog'][$index];
     }
+
+    public function getContacts()
+    {
+        $data = $this->getData();
+        return $data['contacts'];
+    }
 }
 
 $api = new Api('shahabtahrir');
+
+$contacts = $api->getContacts();
 
 ?>
 <!DOCTYPE html>
@@ -134,7 +142,98 @@ $api = new Api('shahabtahrir');
 </head>
 
 <body dir="rtl">
+    <!-- ======= Mobile nav toggle button ======= -->
+    <!-- <button type="button" class="mobile-nav-toggle d-xl-none"><i class="bi bi-list mobile-nav-toggle"></i></button> -->
+    <i class="bi bi-list mobile-nav-toggle d-lg-none"></i>
+    <!-- ======= Header ======= -->
+    <header id="header" class="d-flex flex-column justify-content-center">
+        <nav id="navbar" class="navbar nav-menu">
+            <ul dir="ltr">
+                <li>
+                    <a href="#hero" class="nav-link scrollto active"><i class="bx bx-home"></i> <span><?= $api->getBlog('title') ?></span></a>
+                </li>
+                <li>
+                    <a href="#portfolio" class="nav-link scrollto"><i class="bx bx-book-content"></i>
+                        <span>محصولات <?= $api->getBlog('title') ?></span></a>
+                </li>
+                <?php if ($contacts) { ?>
+                    <li>
+                        <a href="#contact" class="nav-link scrollto"><i class="bx bx-envelope"></i> <span>ارتباط با ما</span></a>
+                    </li>
+                <?php } ?>
+                <li>
+                    <a href="#footer" class="nav-link scrollto"><i class="bx bx-user"></i> <span>درباره ما</span></a>
+                </li>
+            </ul>
+        </nav>
+        <!-- .nav-menu -->
+    </header>
+    <!-- End Header -->
 
+    <!-- ======= Hero Section ======= -->
+    <section id="hero" class="d-flex flex-column justify-content-center">
+        <div class="container" data-aos="zoom-in" data-aos-delay="100">
+            <h1><?= $api->getBlog('title') ?> <small class="text-muted"><?= $api->getBlog('slug') ?></small></h1>
+        </div>
+    </section>
+    <!-- End Hero -->
+
+    <main id="main">
+
+        <!-- ======= Contact Section ======= -->
+        <?php if ($contacts) { ?>
+            <section id="contact" class="contact">
+                <div class="container" data-aos="fade-up">
+                    <div class="section-title">
+                        <h2>ارتباط با ما</h2>
+                    </div>
+                    <div class="row">
+                        <?php
+                        $contactSize = max(3, intval(12 / count($contacts)));
+                        foreach ($contacts as $contact) {
+                            if ('email' == $contact['contact_type']) {
+                                $icon = 'envelope';
+                            } elseif ('phone' == $contact['contact_type']) {
+                                $icon = 'telephone';
+                            } elseif ('address' == $contact['contact_type']) {
+                                $icon = 'geo-alt';
+                            } else {
+                                $icon = $contact['contact_type'];
+                            }
+                        ?>
+                            <div class="col-lg-<?= $contactSize ?> pt-3">
+                                <div class="info text-center">
+                                    <div class="address d-inline-block">
+                                        <i class="bi bi-<?= $icon ?>"></i>
+                                        <div class="h4"><?= $contact['title'] ?></div>
+                                        <p><a href="<?= $contact['link'] ?>" dir="ltr"><?= $contact['content'] ?></a></p>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php
+                        }
+
+                        ?>
+                    </div>
+                </div>
+            </section>
+        <?php } ?>
+        <!-- End Contact Section -->
+    </main>
+    <!-- End #main -->
+
+    <!-- ======= Footer ======= -->
+    <footer id="footer">
+        <div class="container">
+            <h3><?= $api->getBlog('title') ?></h3>
+            <p><?= $api->getBlog('description') ?></p>
+            <img class="img-fluid" src="<?= $api->getFirstGalleryUrl('blog_logos') ?>" alt="<?= $api->getBlog('title') ?>" />
+        </div>
+    </footer>
+    <!-- End Footer -->
+
+    <div id="preloader"></div>
+    <a href="#" class="back-to-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
 
     <!-- Vendor JS Files -->
     <script src="node_modules/@srexi/purecounterjs/dist/purecounter_vanilla.js"></script>
