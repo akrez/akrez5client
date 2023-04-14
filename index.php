@@ -3,14 +3,14 @@
 class Api
 {
     public $blogName;
-    protected $data;
+    protected $response;
 
     public function __construct($blogName)
     {
         $this->blogName = $blogName;
     }
 
-    public function getApiBaseUrl()
+    public function getBaseUrl()
     {
         return 'https://akrez.ir/api';
         return 'http://localhost/akrez5/api';
@@ -21,10 +21,16 @@ class Api
         return 'https://akrezing.ir/gallery/' . $name;
     }
 
-    public function callApi($url)
+    public function callApi()
     {
+        if (null !== $this->response) {
+            return $this->response;
+        }
+
+        $url = $this->getBaseUrl() . '/' . $this->blogName;
+
         $curl = curl_init($url);
-        curl_setopt_array($curl, [
+        curl_setopt_array($curl, [ 
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_ENCODING => '',
             CURLOPT_MAXREDIRS => 10,
@@ -33,78 +39,72 @@ class Api
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST => 'GET',
         ]);
-        $response = curl_exec($curl);
+        $result = curl_exec($curl);
         curl_close($curl);
 
-        return (array)json_decode($response, true);
+        return $this->response = (array)json_decode($result, true);
     }
 
-    public function getData()
+    public function getItem($index)
     {
-        if (null !== $this->data) {
-            return $this->data;
-        }
-
-        $url = $this->getApiBaseUrl() . '/' . $this->blogName;
-        return $this->data = $this->callApi($url);
+        $items = $this->callApi();
+        return $items[$index];
     }
 
-    public function getValues($index)
+    public function getKeyValues($index, $modelId = null)
     {
-        $data = $this->getData();
-
         $result = [];
-        foreach ($data[$index] as $item) {
-            $result = array_merge($result, $item['values']);
+        foreach ($this->getItem($index) as $item) {
+            if ($modelId === null or $modelId == $item['model_id']) {
+                $result[] = $item;
+            }
         }
         return $result;
     }
 
-    public function getGalleries($index)
+    public function getValues($index, $modelId = null)
     {
-        $data = $this->getData();
-
         $result = [];
-        foreach ($data[$index] as $item) {
-            $result = array_merge($result, $item['names']);
+        foreach ($this->getItem($index) as $item) {
+            if ($modelId === null or $modelId == $item['model_id']) {
+                $result = array_merge($result, $item['values']);
+            }
         }
         return $result;
     }
 
-    public function getFirstGallery($index)
+    public function getNameUrls($index, $modelId = null)
     {
-        $names = $this->getGalleries($index);
-        if ($names) {
-            return reset($names);
+        $result = [];
+        foreach ($this->getItem($index) as $item) {
+            if ($modelId === null or $modelId == $item['model_id']) {
+                foreach ($item['names'] as $name) {
+                    $result[] = $this->getGalleryUrl($name);
+                }
+            }
         }
-        return null;
+        return $result;
     }
 
-    public function getFirstGalleryUrl($index)
+    public function getFirstNameUrl($index, $modelId = null)
     {
-        $name = $this->getFirstGallery($index);
-        if ($name) {
-            return $this->getGalleryUrl($name);
+        $urls = $this->getNameUrls($index, $modelId);
+        if ($urls) {
+            return reset($urls);
         }
         return null;
     }
 
     public function getBlog($index)
     {
-        $data = $this->getData();
-        return $data['blog'][$index];
-    }
-
-    public function getContacts()
-    {
-        $data = $this->getData();
-        return $data['contacts'];
+        $blog = $this->getItem('blog');
+        return $blog[$index];
     }
 }
 
 $api = new Api('shahabtahrir');
 
-$contacts = $api->getContacts();
+$contacts = $api->getItem('contacts');
 
 ?>
 <!DOCTYPE html>
@@ -119,12 +119,12 @@ $contacts = $api->getContacts();
     <meta name="description" content="<?= $api->getBlog('description') ?>">
 
     <!-- Favicons -->
-    <link href="<?= $api->getFirstGalleryUrl('blog_logos') ?>" rel="icon" />
-    <link href="<?= $api->getFirstGalleryUrl('blog_logos') ?>" rel="apple-touch-icon" />
+    <link href="<?= $api->getFirstNameUrl('blog_logos') ?>" rel="icon" />
+    <link href="<?= $api->getFirstNameUrl('blog_logos') ?>" rel="apple-touch-icon" />
 
     <style>
         #hero {
-            background: url("<?= $api->getFirstGalleryUrl('blog_heros') ?>") top right no-repeat;
+            background: url("<?= $api->getFirstNameUrl('blog_heros') ?>") top right no-repeat;
         }
     </style>
 
@@ -180,6 +180,69 @@ $contacts = $api->getContacts();
 
     <main id="main">
 
+        <!-- ======= Portfolio Section ======= -->
+        <section id="portfolio" class="portfolio section-bg">
+            <div class="container" data-aos="fade-up">
+                <div class="section-title">
+                    <h2>محصولات <?= $api->getBlog('title') ?></h2>
+                </div>
+
+                <div class="row">
+                    <div class="col-lg-12 d-flex justify-content-center" data-aos="fade-up" data-aos-delay="100">
+                        <ul id="portfolio-flters">
+                            <li data-filter="*" class="filter-active w-100"><strong>همه محصولات <?= $api->getBlog('title') ?></strong></li>
+                            <?php
+                            foreach ($api->getValues('blog_categories') as $blogCategory) {
+                                echo '<li data-filter=".filter-' . crc32($blogCategory) . '"><strong>' . $blogCategory . '</strong></li>';
+                            }
+                            ?>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="row portfolio-container" data-aos="fade-up" data-aos-delay="200">
+                    <?php
+                    foreach ($api->getItem('products') as $product) {
+                        $images = $api->getNameUrls('products_images', $product['id']);
+                        if (empty($images)) {
+                            $images = [$api->getFirstNameUrl('blog_logos')];
+                        }
+                    ?>
+                        <div class="col-lg-3 col-md-4 col-sm-6 portfolio-item <?php foreach ($api->getValues('products_categories', $product['id']) as $tag) echo 'filter-' . crc32($tag); ?>">
+                            <div class="portfolio-wrap text-center">
+                                <?php
+                                echo '<span class="d-inline-block p-3">' . $product['title'] . '</span>';
+                                if ($images) {
+                                    echo '<img src="' . $api->getFirstNameUrl('products_images', $product['id']) . '" class="img-fluid" alt="' . htmlspecialchars($product['title'], ENT_QUOTES, 'UTF-8') . '" />';
+                                }
+                                ?>
+                                <div class="portfolio-info">
+                                    <h4><?= $product['title'] ?></h4>
+                                    <p>
+                                        <?php
+                                        foreach ($api->getKeyValues('products_properties', $product['id']) as $productProperties) {
+                                            echo '<strong>' . $productProperties['key'] . ':</strong> ';
+                                            echo implode(', ', $productProperties['values']);
+                                            echo '<br>';
+                                        }
+                                        ?>
+                                    </p>
+                                    <div class="portfolio-links">
+                                        <?php
+                                        foreach ($images as $image) {
+                                            echo '<a href="' . $image . '" data-gallery="portfolioGallery" class="portfolio-lightbox" title="' . $product['title'] . '"><i class="bx bx-plus"></i></a>';
+                                        }
+                                        ?>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <?php } ?>
+                </div>
+            </div>
+        </section>
+        <!-- End Portfolio Section -->
+
         <!-- ======= Contact Section ======= -->
         <?php if ($contacts) { ?>
             <section id="contact" class="contact">
@@ -227,7 +290,7 @@ $contacts = $api->getContacts();
         <div class="container">
             <h3><?= $api->getBlog('title') ?></h3>
             <p><?= $api->getBlog('description') ?></p>
-            <img class="img-fluid" src="<?= $api->getFirstGalleryUrl('blog_logos') ?>" alt="<?= $api->getBlog('title') ?>" />
+            <img class="img-fluid" src="<?= $api->getFirstNameUrl('blog_logos') ?>" alt="<?= $api->getBlog('title') ?>" />
         </div>
     </footer>
     <!-- End Footer -->
