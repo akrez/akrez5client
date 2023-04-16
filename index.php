@@ -1,5 +1,38 @@
 <?php
 
+$sites = require('sites.php');
+
+function aboart()
+{
+    header("HTTP/1.0 404 Not Found");
+    die("HTTP/1.0 404 Not Found");
+}
+
+function detectBlogName($url, $sites, $thisHost)
+{
+    $url = str_replace('https://', '', $url);
+    $url = str_replace('http://', '', $url);
+
+    $url = explode('/', $url, 2);
+    $url = $url[0];
+
+    if (isset($sites[$url])) {
+        return $sites[$url];
+    }
+
+    $url = explode('.' . $thisHost, $url, 2);
+    if (2 === count($url)) {
+        return $url[0];
+    }
+
+    return null;
+}
+
+$blogName = detectBlogName($_SERVER['HTTP_HOST'], $sites, 'akrez.ir');
+if (empty($blogName)) {
+    aboart();
+}
+
 class Api
 {
     public $blogName;
@@ -12,8 +45,8 @@ class Api
 
     public function getBaseUrl()
     {
-        return 'https://akrez.ir/api';
         return 'http://localhost/akrez5/api';
+        return 'https://akrez.ir/api';
     }
 
     public function getGalleryUrl($name)
@@ -30,7 +63,7 @@ class Api
         $url = $this->getBaseUrl() . '/' . $this->blogName;
 
         $curl = curl_init($url);
-        curl_setopt_array($curl, [ 
+        curl_setopt_array($curl, [
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_ENCODING => '',
             CURLOPT_MAXREDIRS => 10,
@@ -45,7 +78,7 @@ class Api
         return $this->response = (array)json_decode($result, true);
     }
 
-    public function getItem($index)
+    public function get($index)
     {
         $items = $this->callApi();
         return $items[$index];
@@ -54,9 +87,12 @@ class Api
     public function getKeyValues($index, $modelId = null)
     {
         $result = [];
-        foreach ($this->getItem($index) as $item) {
+        foreach ($this->get($index) as $item) {
             if ($modelId === null or $modelId == $item['model_id']) {
-                $result[] = $item;
+                if (!isset($result[$modelId['key']])) {
+                    $result[$modelId['key']] = [];
+                }
+                $result[$modelId['key']] = array_merge($result[$modelId['key']], $item['values']);
             }
         }
         return $result;
@@ -65,7 +101,7 @@ class Api
     public function getValues($index, $modelId = null)
     {
         $result = [];
-        foreach ($this->getItem($index) as $item) {
+        foreach ($this->get($index) as $item) {
             if ($modelId === null or $modelId == $item['model_id']) {
                 $result = array_merge($result, $item['values']);
             }
@@ -76,7 +112,7 @@ class Api
     public function getNameUrls($index, $modelId = null)
     {
         $result = [];
-        foreach ($this->getItem($index) as $item) {
+        foreach ($this->get($index) as $item) {
             if ($modelId === null or $modelId == $item['model_id']) {
                 foreach ($item['names'] as $name) {
                     $result[] = $this->getGalleryUrl($name);
@@ -97,15 +133,17 @@ class Api
 
     public function getBlog($index)
     {
-        $blog = $this->getItem('blog');
+        $blog = $this->get('blog');
         return $blog[$index];
     }
 }
 
-$api = new Api('shahabtahrir');
+$api = new Api($blogName);
+if (empty($api->callApi())) {
+    aboart();
+}
 
-$contacts = $api->getItem('contacts');
-
+$contacts = $api->get('contacts');
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -202,7 +240,7 @@ $contacts = $api->getItem('contacts');
 
                 <div class="row portfolio-container" data-aos="fade-up" data-aos-delay="200">
                     <?php
-                    foreach ($api->getItem('products') as $product) {
+                    foreach ($api->get('products') as $product) {
                         $images = $api->getNameUrls('products_images', $product['id']);
                         if (empty($images)) {
                             $images = [$api->getFirstNameUrl('blog_logos')];
@@ -220,9 +258,9 @@ $contacts = $api->getItem('contacts');
                                     <h4><?= $product['title'] ?></h4>
                                     <p>
                                         <?php
-                                        foreach ($api->getKeyValues('products_properties', $product['id']) as $productProperties) {
-                                            echo '<strong>' . $productProperties['key'] . ':</strong> ';
-                                            echo implode(', ', $productProperties['values']);
+                                        foreach ($api->getKeyValues('products_properties', $product['id']) as $productPropertyKey => $productProperties) {
+                                            echo '<strong>' . $productPropertyKey . ':</strong> ';
+                                            echo implode(', ', $productProperties);
                                             echo '<br>';
                                         }
                                         ?>
