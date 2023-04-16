@@ -1,7 +1,6 @@
 <?php
 
 $url = $_SERVER['HTTP_HOST'];
-$url = 'http://shahabtahrir.akrez.ir/';
 $sites = require('sites.php');
 
 function aboart()
