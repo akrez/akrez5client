@@ -1,5 +1,7 @@
 <?php
 
+$url = $_SERVER['HTTP_HOST'];
+$url = 'http://shahabtahrir.akrez.ir/';
 $sites = require('sites.php');
 
 function aboart()
@@ -28,7 +30,7 @@ function detectBlogName($url, $sites, $thisHost)
     return null;
 }
 
-$blogName = detectBlogName($_SERVER['HTTP_HOST'], $sites, 'akrez.ir');
+$blogName = detectBlogName($url, $sites, 'akrez.ir');
 if (empty($blogName)) {
     aboart();
 }
@@ -45,8 +47,8 @@ class Api
 
     public function getBaseUrl()
     {
-        return 'http://localhost/akrez5/api';
         return 'https://akrez.ir/api';
+        return 'http://localhost/akrez5/api';
     }
 
     public function getGalleryUrl($name)
