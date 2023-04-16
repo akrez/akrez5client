@@ -91,10 +91,10 @@ class Api
         $result = [];
         foreach ($this->get($index) as $item) {
             if ($modelId === null or $modelId == $item['model_id']) {
-                if (!isset($result[$modelId['key']])) {
-                    $result[$modelId['key']] = [];
+                if (!isset($result[$item['key']])) {
+                    $result[$item['key']] = [];
                 }
-                $result[$modelId['key']] = array_merge($result[$modelId['key']], $item['values']);
+                $result[$item['key']] = array_merge($result[$item['key']], $item['values']);
             }
         }
         return $result;
