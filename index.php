@@ -52,7 +52,7 @@ class Api
 
     public function getGalleryUrl($name)
     {
-        return 'https://akrezing.ir/gallery/' . $name;
+        return 'https://gallery.akrezing.ir/' . $name;
     }
 
     public function callApi()
