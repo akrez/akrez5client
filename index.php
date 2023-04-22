@@ -252,7 +252,7 @@ $contacts = $api->get('contacts');
                                 <?php
                                 echo '<span class="d-inline-block p-3">' . $product['title'] . '</span>';
                                 if ($images) {
-                                    echo '<img src="' . $api->getFirstNameUrl('products_images', $product['id']) . '" class="img-fluid" alt="' . htmlspecialchars($product['title'], ENT_QUOTES, 'UTF-8') . '" />';
+                                    echo '<img src="' . $api->getFirstNameUrl('products_images', $product['id']) . '" class="img-fluid p-2" alt="' . htmlspecialchars($product['title'], ENT_QUOTES, 'UTF-8') . '" />';
                                 }
                                 ?>
                                 <div class="portfolio-info">
