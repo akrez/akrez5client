@@ -55,6 +55,26 @@ class Api
         return 'https://gallery.akrezing.ir/' . $name;
     }
 
+    public function getIP()
+    {
+        if (isset($_SERVER['HTTP_CLIENT_IP'])) {
+            return $_SERVER['HTTP_CLIENT_IP'];
+        } elseif (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+            return $_SERVER['HTTP_X_FORWARDED_FOR'];
+        } elseif (isset($_SERVER['HTTP_X_FORWARDED'])) {
+            return $_SERVER['HTTP_X_FORWARDED'];
+        } elseif (isset($_SERVER['HTTP_X_CLUSTER_CLIENT_IP'])) {
+            return $_SERVER['HTTP_X_CLUSTER_CLIENT_IP'];
+        } elseif (isset($_SERVER['HTTP_FORWARDED_FOR'])) {
+            return $_SERVER['HTTP_FORWARDED_FOR'];
+        } elseif (isset($_SERVER['HTTP_FORWARDED'])) {
+            return $_SERVER['HTTP_FORWARDED'];
+        } elseif (isset($_SERVER['REMOTE_ADDR'])) {
+            return $_SERVER['REMOTE_ADDR'];
+        }
+        return null;
+    }
+
     public function callApi()
     {
         if (null !== $this->response) {
@@ -72,6 +92,10 @@ class Api
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST => 'GET',
+            CURLOPT_HTTPHEADER => [
+                'X-Forwarded-For:' . $this->getIP(),
+                'User-Agent:' . $_SERVER['HTTP_USER_AGENT'],
+            ],
         ]);
         $result = curl_exec($curl);
         curl_close($curl);
